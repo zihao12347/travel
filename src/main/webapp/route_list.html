@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>黑马旅游-搜索</title>
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" href="css/search.css">
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/getParameter.js"></script>
+    <script>
+        //添加页面加载事件
+        $(function () {
+            /*一：获取cid：通过location.search方法获取*/
+            /*//设置或返回以问号?开始的url(查询部分):如url?cid=1,则获取到的为?cid=1
+            var search = location.search;
+            //分割？，从第二开始：如?cid=1,则获取到为：cid=1
+            var cid = search.split("=")[1];*/
+            var cid = getParameter("cid")
+
+
+            /*获取rname:通过JQ文件中的方法获取*/
+            //获取搜索框中的rname值，完成旅游路线的查询
+            var rname = getParameter("rname");
+            //这里当rname的值不为空时，进行字符串节码，防止中文乱码的问题
+            if (rname) {
+                rname = window.decodeURIComponent(rname);
+            }
+            load(cid, null, rname);
+
+        })
+
+        //二：展示分页页面数据
+        function load(cid, currentpage, rname) {
+            /*二：发送ajax请求，请求route/pagequery，传递cid*/
+            $.get("route/pagequery", {cid: cid, currentpage: currentpage, rname: rname}, function (pagebean) {
+                //三：解析数据展示到页面中
+                //三.1分页工具条的展示
+                //展示总页数和总记录条数
+                $("#totalpage").html(pagebean.totalpage);
+                $("#totalcount").html(pagebean.totalcount)
+                //展示分页页码
+                var list = '';
+
+                var firstpage = ' <li onclick="javascript:load(' + cid + ',1,\'' + rname + '\')"><a href="javascript:javascript:void(0)">首页</a></li>';
+                //获取当前页面,-1得上一页
+                var pp = pagebean.currentpage - 1;
+                //防止上一页计算到0和负数上去
+                if (pp <= 1) {
+                    pp = 1;
+                }
+                var prepage = ' <li class="threeword" onclick="javascript:load(' + cid + ', ' + pp + ' ,\'' + rname + '\')"><a href="javascript:javascript:void(0)">上一页</a></li>'
+                list = list + firstpage + prepage;
+
+                /**
+                 * 实现分页工具条每页只展示10条，
+                 * ————够达到前5后4效果
+                 *          如果前面不够5，后面补齐10个
+                 *          如果后面不够4，前面补齐10个
+                 */
+                var start;  //每页的分页工具条开始位置
+                var end;    //每页分页工具条结束位置
+
+                //要显示10条
+                if (pagebean.totalpage < 10) {//如果总页数没有10页，就从1开始，然后显示全部
+                    start = 1;
+                    end = pagebean.totalpage;
+                } else {
+                    //如果总的页面够10，则实现前5后4效果
+                    start = pagebean.currentpage - 5;
+                    end = pagebean.currentpage + 4;
+
+                }
+                if (start < 1) {//如果当前页面不够减，导致开始位置小于1，则以1开始，结束位置+9
+                    start = 1;//
+                    end = start + 9;
+                }
+                if (end > pagebean.totalpage) {
+                    //如果当页面加4后，导致结束位置大于总页面数，则结束位置为总页面数，开始位置-9
+                    end = pagebean.totalpage;
+                    start = end - 9;
+                }
+
+
+                for (var i = start; i <= end; i++) {
+                    //给当前页面的工具条加一个样式，判断是否为当前样式
+                    var li;
+                    if (pagebean.currentpage == i) {
+                        li = '<li class="curPage" onclick="javascript:load(' + cid + ', ' + i + ' ,\'' + rname + '\')"><a href="javascript:void(0)">' + i + '</a></li>'
+                    } else {
+
+                        li = '<li onclick="javascript:load(' + cid + ', ' + i + ' ,\'' + rname + '\')"><a href="javascript:void(0)">' + i + '</a></li>'
+                    }
+                    list = list + li;
+
+                }
+
+
+                var lastpage = ' <li onclick="javascript:load(' + cid + ',' + pagebean.totalpage + ')"><a href="javascript:void(0)">尾页</a></li>';
+                //获取当前页面，+1计算得下一页面
+                var np = pagebean.currentpage + 1;
+                if (np > pagebean.totalpage) {
+                    np = pagebean.totalpage
+                }
+                var nextpage = ' <li class="threeword" onclick="javascript:load(' + cid + ', ' + np + ' ,\'' + rname + '\')"><a href="javascript:void(0)">下一页</a></li>'
+                list = list + nextpage + lastpage;
+                $("#pageNum").html(list)
+
+
+                //三.2分页数据的展示
+
+                var listquery = "";
+
+                for (var i = 0; i < pagebean.list.length; i++) {
+                    //获取集合中的每个{}的数据
+                    //var route= pagebean.list[i]
+                    var liquery = ' <li>' +
+                        '                        <div class="img"><img src="' + pagebean.list[i].rimage + '" alt="" style="width: 299px"></div>\n' +
+                        '                        <div class="text1">' +
+                        '                            <p>' + pagebean.list[i].rname + '</p>' +
+                        '                            <br/>' +
+                        '                            <p>' + pagebean.list[i].routeIntroduce + '</p>' +
+                        '                        </div>' +
+                        '                        <div class="price">' +
+                        '                            <p class="price_num">' +
+                        '                                <span>&yen;</span>' +
+                        '                                <span>' + pagebean.list[i].price + '</span>' +
+                        '                                <span>起</span>' +
+                        '                            </p>' +
+                        '                            <p><a href="route_detail.html?rid=' + pagebean.list[i].rid + '">查看详情</a></p>' +
+                        '                        </div>' +
+                        '                    </li>'
+                    listquery = listquery + liquery;
+
+                }
+
+                $("#querypage").html(listquery)
+            })
+            window.scrollTo(0, 0)//当每次实现
+
+
+        }
+    </script>
+</head>
+<body>
+<!--引入头部-->
+<!--<div id="header"></div>-->
+<div id="header"></div>
+<div class="page_one">
+    <div class="contant">
+        <div class="crumbs">
+            <img src="images/search.png" alt="">
+            <p>黑马旅行><span>搜索结果</span></p>
+        </div>
+        <div class="xinxi clearfix">
+            <div class="left">
+                <div class="header">
+                    <span>商品信息</span>
+                    <span class="jg">价格</span>
+                </div>
+                <ul id="querypage">
+
+                </ul>
+                <div class="page_num_inf">
+                    <i></i> 共
+                    <span id="totalpage"></span>页<span id="totalcount"></span>条
+                </div>
+                <div class="pageNum">
+                    <ul id="pageNum">
+
+                    </ul>
+                </div>
+
+            </div>
+            <div class="right">
+                <div class="top">
+                    <div class="hot">HOT</div>
+                    <span>热门推荐</span>
+                </div>
+                <ul>
+                    <li>
+                        <div class="left"><img src="images/04-search_09.jpg" alt=""></div>
+                        <div class="right">
+                            <p>清远新银盏温泉度假村酒店/自由行套...</p>
+                            <p>网付价<span>&yen;<span>899</span>起</span>
+                            </p>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="left"><img src="images/04-search_09.jpg" alt=""></div>
+                        <div class="right">
+                            <p>清远新银盏温泉度假村酒店/自由行套...</p>
+                            <p>网付价<span>&yen;<span>899</span>起</span>
+                            </p>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="left"><img src="images/04-search_09.jpg" alt=""></div>
+                        <div class="right">
+                            <p>清远新银盏温泉度假村酒店/自由行套...</p>
+                            <p>网付价<span>&yen;<span>899</span>起</span>
+                            </p>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="left"><img src="images/04-search_09.jpg" alt=""></div>
+                        <div class="right">
+                            <p>清远新银盏温泉度假村酒店/自由行套...</p>
+                            <p>网付价<span>&yen;<span>899</span>起</span>
+                            </p>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="left"><img src="images/04-search_09.jpg" alt=""></div>
+                        <div class="right">
+                            <p>清远新银盏温泉度假村酒店/自由行套...</p>
+                            <p>网付价<span>&yen;<span>899</span>起</span>
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--引入头部-->
+<div id="footer"></div>
+<!--导入布局js，共享header和footer-->
+<script type="text/javascript" src="js/include.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+<!-- 头部 start -->
+<script src="js/jquery-3.3.1.js"></script>
+<!--引入JQ文件的获取url后面参数的值的方法-->
+<script src="js/getParameter.js"></script>
+<script>
+    //添加页面加载事件
+    $(function () {
+        //发送一个get异步请求,查询用户信息
+        $.get("user/findone", function (data) {
+            //显示用户的姓名
+            var content = "欢迎登入:" + data.name + "!";
+            $("#span_username").html(content)
+        })
+
+
+        //发送一个ajax请求，查询分类信息
+        $.get("category/findall", {}, function (data) {
+            //查询的内容为list数组，[cid:1,cname:国内游....]
+            //1.设置默认前面的首页：
+            var list = '<li class="nav-active"><a href="index.html">首页</a></li>';
+            //2.遍历查询的分类数据
+            for (var i = 0; i <data.length; i++) {
+                //3.拼接分类数据
+                //
+                //
+                /**传递id:
+                 * 由于路线表和分类表为多对一的关系：
+                 * 为了当点击分类标签时，显示不同的路线，
+                 * 这里我们传入分类表的cid，根据分类表的cid去查询不同的旅游路线
+                 * @type {string}
+                 */
+                var l = '<li><a href="route_list.html?cid='+ data[i].cid+'">' + data[i].cname + '</a></li>';
+                list = list + l;
+            } //4.设置后面默认的：收藏排行榜
+            list = list + '<li><a href="favoriterank.html">收藏排行榜</a></li>';
+            //5。将获取的所有数据，添加到ul中
+            $("#category").html(list)
+
+
+            /**
+             * 路游路线的查询：
+             * header页面只负责获取cid，和获取查询框中的数据，然后传递到list页面，在list页面完成查询功能
+             */
+            //给searchbutton绑定一个单击事件，获取searchinput搜索框的内容
+            $("#search-button").click(function () {
+                //获取searchinput的值
+                var rname = $("#search_input").val();
+               //通过getparamsJQ文件中方法获取url后面参数的值：例如cid,rname等
+                var cid=getParameter("cid");
+                //默认首先在index页面，然后点击搜索确认按钮跳转到rout_list.html再携带参数?cid= &rname= ，完成查询
+                //location.href="http://localhost/travel/route_list.html?cid="+cid+"&rname="+rname;
+                location.href="route_list.html?cid="+cid+"&rname="+rname;
+            })
+        })
+
+    })
+</script>
+<header id="header">
+    <div class="top_banner">
+        <img src="images/top_banner.jpg" alt="">
+    </div>
+    <div class="shortcut">
+        <!-- 未登录状态  -->
+        <div class="login_out">
+            <a href="login.html">登录</a>
+            <a href="register.html">注册</a>
+        </div>
+        <!-- 登录状态  -->
+        <div class="login">
+
+            <span id="span_username"></span>
+            <a href="myfavorite.html" class="collection">我的收藏</a>
+            <!--location.href=url;表示从当前页面导向到另外一个页面，同时当前页面也刷新了-->
+            <a href="javascript:location.href='http://localhost/travel/user/exit'" id="exit">退出</a>
+        </div>
+    </div>
+    <div class="header_wrap">
+        <div class="topbar">
+            <div class="logo">
+                <a href="/"><img src="images/logo.jpg" alt=""></a>
+            </div>
+            <div class="search">
+                <input name="search_input" id="search_input" type="text" placeholder="请输入路线名称" class="search_input" autocomplete="off">
+                <a href="javascript:;" id="search-button" class="search-button">搜索</a>
+            </div>
+            <div class="hottel">
+                <div class="hot_pic">
+                    <img src="images/hot_tel.jpg" alt="">
+                </div>
+                <div class="hot_tel">
+                    <p class="hot_time">客服热线(9:00-6:00)</p>
+                    <p class="hot_num">400-618-9090</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- 头部 end -->
+<!-- 首页导航 -->
+<div class="navitem">
+    <ul class="nav" id="category">
+        <!-- <li class="nav-active"><a href="index.html">首页</a></li>
+         <li><a href="route_list.html">门票</a></li>
+         <li><a href="route_list.html">酒店</a></li>
+         <li><a href="route_list.html">香港车票</a></li>
+         <li><a href="route_list.html">出境游</a></li>
+         <li><a href="route_list.html">国内游</a></li>
+         <li><a href="route_list.html">港澳游</a></li>
+         <li><a href="route_list.html">抱团定制</a></li>
+         <li><a href="route_list.html">全球自由行</a></li>
+         <li><a href="favoriterank.html">收藏排行榜</a></li>-->
+    </ul>
+</div>
+    
